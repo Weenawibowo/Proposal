@@ -1,1 +1,114 @@
-# Proposal
+
+
+Group 120 Project Proposal 
+
+Nelly Yousefi, Adam Hardy, Kristen Tien, Weena Wibowo
+
+Introduction:
+
+The team has selected to work with the Tennis Data atp2017-2019.csv due to the variety of interesting variables and data available to work with. 
+Between the two tennis data sets, the "Game Results for Top 500 Players from 2017-2019" was favorable as the team was interested in selecting specific variables to predict some of the top tennis players. 
+After analyzing and understanding the data in this data set, three variables were selected to predict the top tennis players. There are player age, player height, and number of aces per game of each winning player.
+
+The columns that will be pulled from the data are as follows.
+
+- tourney_id - unique identifier for each tournament
+- tourney_name - name of tournament
+- winner_name - name of winning player
+- winner-ht - height of winning player in centimeters
+- winner_age - age of winning player
+w_aces - winning player number of aces
+
+As a result, the question to answer can be defined as the following. 
+
+How accurately can the three above-mentioned variables predict the top five players in the 2019 Australian Open Tournament?
+
+
+Preliminary exploratory data analysis:
+
+library(tidyverse)
+library(repr)
+library(readxl)
+library(tidymodels)
+source("tests.R")
+source("cleanup.R")
+options(repr.matrix.max.rows = 6)
+
+#read data
+tennis_data <- read_csv("/home/jovyan/dsci_groupproject120/atp2017-2019.csv")
+tennis_data
+
+#clean & wrangle data
+tennis_data_clean <- tennis_data |>
+                      select(tourney_id, tourney_name, winner_name, winner_ht, winner_age, w_ace) |>
+                      filter(tourney_id == "2019-580") |>
+                      mutate(winner_name = as_factor(winner_name))
+                      #mutate(winning_perct = as_factor(winner_name))
+tennis_data_clean  
+
+#create training data set
+tennis_split <- initial_split(tennis_data_clean, prop = 0.75, strata = tourney_name)
+tennis_train_data <- training(tennis_split)
+
+#summarize data
+tennis_data_summary <- summarize(tennis_train_data,
+                                 num_of_winners = n_distinct(winner_name, na.rm = TRUE),
+                                 avg_height = mean(winner_ht, na.rm = TRUE),
+                                 avg_age = mean(winner_age, na.rm = TRUE),
+                                 avg_aces = mean(w_ace, na.rm = TRUE),
+                                 num_of_na_rows = sum(is.na(winner_ht)))
+tennis_data_summary
+
+# (1) plot player height distribution
+options(repr.plot.width = 10, repr.plot.height = 7)        
+        
+height_distrn <- ggplot(tennis_train_data, aes(x = winner_ht)) +                         
+                      geom_histogram(binwidth = 3) +     
+                      labs(x = "Height (cm)",
+                           y = "Count") +
+                      theme(text = element_text(size = 12)) +  
+                      ggtitle("Distribution of Player Height") 
+height_distrn
+
+# (2) plot player age distribution
+options(repr.plot.width = 10, repr.plot.height = 7)        
+        
+age_distrn <- ggplot(tennis_train_data, aes(x = winner_age)) +                         
+                      geom_histogram(binwidth = 1) +     
+                      labs(x = "Age (yrs)",
+                           y = "Count") +
+                      theme(text = element_text(size = 12)) +  
+                      ggtitle("Distribution of Player Age")
+age_distrn
+
+# (3) plot player ace distribution
+options(repr.plot.width = 10, repr.plot.height = 7)        
+        
+ace_distrn <- ggplot(tennis_train_data, aes(x = w_ace)) +                         
+                      geom_histogram(binwidth = 2) +     
+                      labs(x = "Number of Aces",
+                           y = "Count") +
+                      theme(text = element_text(size = 12)) +  
+                      ggtitle("Distribution of Aces")
+ace_distrn
+
+
+Methods:
+
+Firstly we completed all of the steps above for our preliminary exploratory data analysis. 
+This resulted in our data being condensed into 6 columns/variables, 
+tourney_id, tourney_name, winner_name, winner_ht, winner_age, w_ace and rows with only data from the 2019 Australian open, 
+which have the tourney_id of 2019-580 . To answer our question, we will use our training data set, which is 75% of our original data, 
+to train our classification model in combination with cross validation to find the overall accuracy of the predictors. 
+We will compare the top players we arrived at from our analysis to the top players based off of win percentage. 
+As for visualization, we will make different plots to compare the different variables.
+
+
+Expected outcomes and significance:
+
+The expected findings of this project are that the three variables examined (height, age, and the number of aces) will be able to predict the winners of a tennis match with an accuracy of above 70%. 
+However, these variables are not comprehensive as many factors can affect the outcomes of a tennis game, so future exploration could consider many other variables such as the number of serve 
+points or break points scored. Additionally, a future analysis could combine all of these variables as predictors and would likely improve the prediction accuracy for this model.
+
+The findings from this project could be extrapolated for tennis players to see which physical characteristics or skills are favorable for them to win a match. This information could be important for 
+tennis players to examine which skills or characteristics are present in those with a high winning rate and allow them to choose a specific focus to improve on in order to become a stronger competitor.
